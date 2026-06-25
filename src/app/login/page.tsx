@@ -81,7 +81,23 @@ export default function LoginPage() {
           )}
 
           <button
-            onClick={() => signIn("github", { callbackUrl: "/analyze" })}
+            onClick={() => {
+              // When running inside an iframe (v0 preview / embedded), opening
+              // OAuth in the same frame gets intercepted by the sandbox auth layer.
+              // Always open in a new tab so the callback can complete normally.
+              const inIframe = typeof window !== "undefined" && window.self !== window.top;
+              if (inIframe) {
+                const origin = window.location.origin;
+                const callbackUrl = encodeURIComponent(`${origin}/analyze`);
+                window.open(
+                  `${origin}/api/auth/signin/github?callbackUrl=${callbackUrl}`,
+                  "_blank",
+                  "noopener,noreferrer"
+                );
+              } else {
+                signIn("github", { callbackUrl: "/analyze" });
+              }
+            }}
             className="w-full flex items-center justify-center gap-3 rounded-xl bg-zinc-100 hover:bg-white text-zinc-900 px-6 py-4 font-semibold transition-colors text-base"
           >
             <Code2 className="h-5 w-5" />
