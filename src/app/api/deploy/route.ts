@@ -50,7 +50,8 @@ export async function POST(req: Request) {
             bio,
             name: dbUser.name ?? undefined,
           });
-        } catch {
+        } catch (err) {
+          console.log("[v0] Bio update skipped:", err instanceof Error ? err.message : String(err));
           // Token may lack `user` write scope; skip silently and continue
         }
 
@@ -137,6 +138,7 @@ export async function POST(req: Request) {
         );
       } catch (err) {
         const message = err instanceof Error ? err.message : "Deploy failed";
+        console.error("[v0] Deploy error:", err);
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ type: "error", message })}\n\n`)
         );
