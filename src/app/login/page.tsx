@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,13 +22,13 @@ const PERKS = [
   "Polish Score™ from 0-100",
 ];
 
-export default function LoginPage() {
+// Inner component uses useSearchParams — must be wrapped in Suspense
+function LoginContent() {
   const { status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorKey = searchParams.get("error") ?? "";
   const errorMessage = errorKey ? (ERROR_MESSAGES[errorKey] ?? ERROR_MESSAGES.Default) : null;
-  // After 2 seconds, stop waiting for the session check and show the login form
   const [sessionTimedOut, setSessionTimedOut] = useState(false);
 
   useEffect(() => {
@@ -42,7 +43,6 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, [status]);
 
-  // Only show the spinner briefly while checking — never block forever
   if ((status === "loading" && !sessionTimedOut) || status === "authenticated") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -82,9 +82,6 @@ export default function LoginPage() {
 
           <button
             onClick={() => {
-              // When running inside an iframe (v0 preview / embedded), opening
-              // OAuth in the same frame gets intercepted by the sandbox auth layer.
-              // Always open in a new tab so the callback can complete normally.
               const inIframe = typeof window !== "undefined" && window.self !== window.top;
               if (inIframe) {
                 const origin = window.location.origin;
@@ -121,5 +118,22 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// Fallback shown during SSR / Suspense boundary resolution
+function LoginFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="h-6 w-6 rounded-full border-2 border-zinc-700 border-t-zinc-300 animate-spin" />
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginContent />
+    </Suspense>
   );
 }
