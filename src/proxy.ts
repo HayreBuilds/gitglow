@@ -9,7 +9,9 @@ export function proxy(req: NextRequest & { auth?: unknown }) {
   const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
 
   if (isProtected && !req.auth) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

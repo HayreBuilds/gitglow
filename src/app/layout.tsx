@@ -9,9 +9,9 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.AUTH_URL ??
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-    process.env.V0_RUNTIME_URL ??
+    process.env.V0_RUNTIME_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    process.env.AUTH_URL ||
     "http://localhost:3000"
   ),
   title: "GitGlow ✨ — Polish Your GitHub Profile with AI",

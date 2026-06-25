@@ -3,8 +3,17 @@ import GitHub from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 
+// In the v0 preview, AUTH_URL may be hardcoded to localhost:3000 in stored env.
+// Override it at module load time so NextAuth uses the real public preview URL.
+if (process.env.V0_RUNTIME_URL) {
+  process.env.AUTH_URL = process.env.V0_RUNTIME_URL;
+} else if (process.env.VERCEL_URL && !process.env.AUTH_URL?.startsWith("https://")) {
+  process.env.AUTH_URL = `https://${process.env.VERCEL_URL}`;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db),
+  basePath: "/api/auth",
   providers: [
     GitHub({
       clientId: process.env.AUTH_GITHUB_ID!,
