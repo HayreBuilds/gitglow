@@ -41,9 +41,9 @@ export async function POST(req: Request) {
         // Phase 1: Analyze
         emit("status", { message: "Analyzing your GitHub profile..." });
         const [profile, repos, hasReadme] = await Promise.all([
-          getProfile(dbUser.githubToken!, dbUser.username),
-          getRepositories(dbUser.githubToken!, dbUser.username),
-          hasProfileReadme(dbUser.githubToken!, dbUser.username),
+          getProfile(dbUser.githubToken!, dbUser.username!),
+          getRepositories(dbUser.githubToken!, dbUser.username!),
+          hasProfileReadme(dbUser.githubToken!, dbUser.username!),
         ]);
 
         const score = calculatePolishScore(profile, repos, hasReadme, repos.length * 8);

@@ -9,12 +9,16 @@ type PolishWithUser = Polish & { user: User };
 export const dynamic = "force-dynamic";
 
 async function getPolishes() {
-  return db.polish.findMany({
-    where: { status: "COMPLETED", isPublic: true },
-    include: { user: true },
-    orderBy: { completedAt: "desc" },
-    take: 24,
-  });
+  try {
+    return await db.polish.findMany({
+      where: { status: "COMPLETED", isPublic: true },
+      include: { user: true },
+      orderBy: { completedAt: "desc" },
+      take: 24,
+    });
+  } catch {
+    return [];
+  }
 }
 
 export default async function GalleryPage() {
@@ -66,7 +70,7 @@ export default async function GalleryPage() {
                   {polish.user.avatar && (
                     <Image
                       src={polish.user.avatar}
-                      alt={polish.user.username}
+                      alt={polish.user.username ?? ""}
                       width={40}
                       height={40}
                       className="rounded-full"

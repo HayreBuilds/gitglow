@@ -8,18 +8,20 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(cuid())
-  githubId    String    @unique
-  username    String    @unique
-  email       String?
-  name        String?
-  avatar      String?
-  githubToken String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  polishes    Polish[]
-  accounts    Account[]
-  sessions    Session[]
+  id            String    @id @default(cuid())
+  githubId      String?   @unique
+  username      String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  avatar        String?
+  githubToken   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  polishes      Polish[]
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model Account {

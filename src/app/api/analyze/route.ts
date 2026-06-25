@@ -10,7 +10,7 @@ export async function POST() {
   const dbUser = await db.user.findUnique({
     where: { id: (session.user as { id: string }).id },
   });
-  if (!dbUser?.githubToken) return Response.json({ error: "No GitHub token" }, { status: 400 });
+  if (!dbUser?.githubToken || !dbUser.username) return Response.json({ error: "No GitHub token" }, { status: 400 });
 
   const [profile, repos, hasReadme] = await Promise.all([
     getProfile(dbUser.githubToken, dbUser.username),

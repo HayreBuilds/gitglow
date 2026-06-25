@@ -1,12 +1,13 @@
 import { PrismaClient } from "@/generated/prisma";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
 function createPrismaClient(): PrismaClient {
   if (!process.env.DATABASE_URL) {
-    // During build without a real DB — create without adapter (will error at runtime)
     return new PrismaClient();
   }
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 

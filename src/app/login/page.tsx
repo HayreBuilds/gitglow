@@ -1,8 +1,17 @@
 "use client";
 
-import { signIn } from "next-auth/react";
-import { Sparkles, Code2, CheckCircle2 } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { Sparkles, Code2, CheckCircle2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
+
+const ERROR_MESSAGES: Record<string, string> = {
+  Configuration: "Server configuration error. Please try again later.",
+  AccessDenied: "Access denied. Please approve the GitHub permissions to continue.",
+  Verification: "Sign-in link expired. Please try again.",
+  Default: "Something went wrong. Please try again.",
+};
 
 const PERKS = [
   "Beautiful animated profile README",
@@ -13,6 +22,28 @@ const PERKS = [
 ];
 
 export default function LoginPage() {
+  const { status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const errorKey = searchParams.get("error") ?? "";
+  const errorMessage = errorKey ? (ERROR_MESSAGES[errorKey] ?? ERROR_MESSAGES.Default) : null;
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/analyze");
+    }
+  }, [status, router]);
+
+  // Show spinner while session is loading or while router.replace is in-flight —
+  // returning null causes a black screen before the navigation fires.
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="h-6 w-6 rounded-full border-2 border-zinc-700 border-t-zinc-300 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -34,6 +65,13 @@ export default function LoginPage() {
           <p className="text-zinc-400 text-sm mb-8">
             Sign in with GitHub to start your profile transformation.
           </p>
+
+          {errorMessage && (
+            <div className="mb-6 flex items-start gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-left text-sm text-red-400">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              {errorMessage}
+            </div>
+          )}
 
           <button
             onClick={() => signIn("github", { callbackUrl: "/analyze" })}

@@ -10,51 +10,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientId: process.env.AUTH_GITHUB_ID!,
       clientSecret: process.env.AUTH_GITHUB_SECRET!,
       authorization: {
-        params: {
-          scope: "read:user user:email repo",
-        },
+        params: { scope: "read:user user:email repo" },
       },
     }),
   ],
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   callbacks: {
-    async session({ session, user }) {
+    async jwt({ token, user, account, profile }) {
+      if (account?.provider === "github" && profile && user?.id) {
+        const gh = profile as unknown as { login: string; id: number; avatar_url: string };
+        token.id = user.id;
+        token.username = gh.login;
+        token.githubToken = account.access_token ?? null;
+        token.avatar = gh.avatar_url;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       if (session.user) {
-        session.user.id = user.id;
-        // Attach GitHub username from our User table
-        const dbUser = await db.user.findUnique({ where: { id: user.id } });
-        if (dbUser) {
-          (session.user as typeof session.user & { username: string; githubToken: string | null }).username = dbUser.username;
-          (session.user as typeof session.user & { githubToken: string | null }).githubToken = dbUser.githubToken;
-        }
+        session.user.id = (token.id as string | undefined) ?? (token.sub ?? "");
+        (session.user as any).username = (token.username as string | null | undefined) ?? null;
+        (session.user as any).githubToken = (token.githubToken as string | null | undefined) ?? null;
       }
       return session;
-    },
-    async signIn({ user, account, profile }) {
-      if (account?.provider === "github" && profile) {
-        const ghProfile = profile as unknown as { login: string; id: number; avatar_url: string };
-        await db.user.upsert({
-          where: { githubId: String(ghProfile.id) },
-          create: {
-            githubId: String(ghProfile.id),
-            username: ghProfile.login,
-            email: user.email ?? undefined,
-            name: user.name ?? undefined,
-            avatar: ghProfile.avatar_url,
-            githubToken: account.access_token ?? null,
-          },
-          update: {
-            username: ghProfile.login,
-            avatar: ghProfile.avatar_url,
-            githubToken: account.access_token ?? null,
-          },
-        });
-      }
-      return true;
     },
   },
   pages: {
     signIn: "/login",
     error: "/login",
   },
+  trustHost: true,
 });

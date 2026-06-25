@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const dbUser = await db.user.findUnique({
     where: { id: (session.user as { id: string }).id },
   });
-  if (!dbUser?.githubToken) return Response.json({ error: "No token" }, { status: 400 });
+  if (!dbUser?.githubToken || !dbUser.username) return Response.json({ error: "No token" }, { status: 400 });
 
   const body = await req.json() as {
     polishId: string;
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
   };
 
   const { polishId, readme, bio, project, commitPlan } = body;
-  const token = dbUser.githubToken;
-  const owner = dbUser.username;
+  const token = dbUser.githubToken!;
+  const owner = dbUser.username!;
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
