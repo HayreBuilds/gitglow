@@ -64,29 +64,33 @@ export async function POST(req: Request) {
         }
         await pushFile(token, owner, readmeRepoName, "README.md", readme, "feat: add profile README ✨");
 
-        // Step 3: Create project repo
-        emit("project", `Creating ${project.name} repository...`, 3, total);
-        const projExists = await repoExists(token, owner, project.name);
-        if (!projExists) {
-          await createRepo(token, project.name, project.description, false);
-          await new Promise((r) => setTimeout(r, 1500));
-        }
+        // Step 3: Create project repo (skipped if generation produced none)
+        if (project) {
+          emit("project", `Creating ${project.name} repository...`, 3, total);
+          const projExists = await repoExists(token, owner, project.name);
+          if (!projExists) {
+            await createRepo(token, project.name, project.description, false);
+            await new Promise((r) => setTimeout(r, 1500));
+          }
 
-        const fileEntries = Object.entries(project.files);
-        for (let i = 0; i < fileEntries.length; i++) {
-          const [path, content] = fileEntries[i];
-          emit(
-            "project",
-            `Pushing ${path} (${i + 1}/${fileEntries.length})...`,
-            3,
-            total
-          );
-          await pushFile(token, owner, project.name, path, content ?? "", `chore: add ${path}`);
-          await new Promise((r) => setTimeout(r, 300));
-        }
+          const fileEntries = Object.entries(project.files);
+          for (let i = 0; i < fileEntries.length; i++) {
+            const [path, content] = fileEntries[i];
+            emit(
+              "project",
+              `Pushing ${path} (${i + 1}/${fileEntries.length})...`,
+              3,
+              total
+            );
+            await pushFile(token, owner, project.name, path, content ?? "", `chore: add ${path}`);
+            await new Promise((r) => setTimeout(r, 300));
+          }
 
-        if (project.topics.length > 0) {
-          await setRepoTopics(token, owner, project.name, project.topics);
+          if (project.topics.length > 0) {
+            await setRepoTopics(token, owner, project.name, project.topics);
+          }
+        } else {
+          emit("project", "No project generated — skipping repo creation.", 3, total);
         }
 
         // Step 4: Push commits
@@ -119,7 +123,7 @@ export async function POST(req: Request) {
           data: {
             status: "COMPLETED",
             scoreAfter,
-            reposCreated: [readmeRepoName, project.name],
+            reposCreated: project ? [readmeRepoName, project.name] : [readmeRepoName],
             commitCount: pushed,
             completedAt: new Date(),
           },
