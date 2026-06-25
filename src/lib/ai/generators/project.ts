@@ -6,7 +6,7 @@ export async function generateProject(
   ownerName: string
 ): Promise<GeneratedProject> {
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-3-5-sonnet-20241022",
     max_tokens: 8192,
     system: `You are a senior software engineer who writes clean, production-quality code. Generate complete, working project files. Return ONLY a JSON object with this structure:
 {

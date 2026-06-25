@@ -38,6 +38,7 @@ export async function POST(req: Request) {
       }
 
       try {
+        console.log("[v0] Starting generation for user:", dbUser.username);
         // Phase 1: Analyze
         emit("status", { message: "Analyzing your GitHub profile..." });
         const [profile, repos, hasReadme] = await Promise.all([
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
           getRepositories(dbUser.githubToken!, dbUser.username!),
           hasProfileReadme(dbUser.githubToken!, dbUser.username!),
         ]);
+        console.log("[v0] GitHub profile fetched, repos count:", repos.length);
 
         const score = calculatePolishScore(profile, repos, hasReadme, repos.length * 8);
         const weaknesses = identifyWeaknesses(profile, repos, hasReadme, repos.length * 8);
@@ -96,6 +98,7 @@ export async function POST(req: Request) {
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : "Generation failed";
+        console.error("[v0] Generation error:", err);
         emit("error", { message });
         await db.polish.update({
           where: { id: polishId },
